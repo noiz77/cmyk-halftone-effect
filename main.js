@@ -358,7 +358,8 @@ const translations = {
 class CMYKHalftone {
     constructor() {
         this.canvas = document.getElementById('glCanvas');
-        this.gl = this.canvas.getContext('webgl') || this.canvas.getContext('experimental-webgl');
+        const glOptions = { preserveDrawingBuffer: true };
+        this.gl = this.canvas.getContext('webgl', glOptions) || this.canvas.getContext('experimental-webgl', glOptions);
 
         if (!this.gl) {
             alert('WebGL is not available. Please use a modern browser.');
@@ -756,6 +757,7 @@ class CMYKHalftone {
     download() {
         if (!this.imageLoaded) return;
 
+        this.render(); // Ensure the latest state is drawn
         const link = document.createElement('a');
         link.download = 'cmyk-halftone.png';
         link.href = this.canvas.toDataURL('image/png');
