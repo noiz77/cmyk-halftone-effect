@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CMYK Halftone | 复古印刷半色调效果</title>
+    <meta name="description" content="将图片转换为复古 CMYK 半色调印刷效果，支持实时预览和参数调节">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <div class="logo-icon"></div>
+                    <h1>CMYK Halftone</h1>
+                </div>
+                <p class="tagline" data-i18n="tagline">复古印刷半色调效果生成器</p>
+            </div>
+            <button class="lang-toggle" id="langToggle" title="Switch Language">
+                <span class="lang-label" data-i18n="langSwitch">English</span>
+            </button>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Canvas Area -->
+            <div class="canvas-section">
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <canvas id="glCanvas"></canvas>
+                    <div class="upload-overlay" id="uploadOverlay">
+                        <label class="upload-content" for="imageInput">
+                            <div class="upload-icon">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                                </svg>
+                            </div>
+                            <p data-i18n="dropOrClick">拖拽或点击上传图片</p>
+                            <input type="file" id="imageInput" accept="image/*" hidden>
+                        </label>
+                    </div>
+                </div>
+                <div class="canvas-actions">
+                    <button class="btn btn-secondary btn-reset" id="resetBtn" data-i18n="reset">重置</button>
+                    <button class="btn btn-primary btn-download" id="downloadBtn" disabled
+                        data-i18n="download">下载</button>
+                </div>
+            </div>
+
+            <!-- Controls Panel -->
+            <aside class="controls-panel">
+                <!-- Presets Section -->
+                <section class="control-section">
+                    <h3 class="section-title" data-i18n="presets">预设</h3>
+                    <div class="presets-grid">
+                        <button class="preset-btn active" data-preset="default"
+                            data-i18n="presetDefault">Default</button>
+                        <button class="preset-btn" data-preset="drops" data-i18n="presetDrops">Drops</button>
+                        <button class="preset-btn" data-preset="newspaper"
+                            data-i18n="presetNewspaper">Newspaper</button>
+                        <button class="preset-btn" data-preset="vintage" data-i18n="presetVintage">Vintage</button>
+                    </div>
+                </section>
+
+                <!-- Parameters Section -->
+                <section class="control-section">
+                    <h3 class="section-title" data-i18n="parameters">参数</h3>
+
+                    <div class="parameters-section">
+                        <!-- Type -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="type">类型</div>
+                            <div class="type-buttons">
+                                <button class="type-btn" data-type="0" data-i18n="typeDots">Dots</button>
+                                <button class="type-btn active" data-type="1" data-i18n="typeInk">Ink</button>
+                                <button class="type-btn" data-type="2" data-i18n="typeSharp">Sharp</button>
+                            </div>
+                        </div>
+
+                        <!-- Size & Grid -->
+                        <div class="param-group">
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="size">大小</span>
+                                    <span class="control-value" id="sizeValue">88%</span>
+                                </label>
+                                <input type="range" class="slider" id="size" min="1" max="100" value="88" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="gridNoise">网格噪点</span>
+                                    <span class="control-value" id="gridNoiseValue">50%</span>
+                                </label>
+                                <input type="range" class="slider" id="gridNoise" min="0" max="100" value="50" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="softness">柔和度</span>
+                                    <span class="control-value" id="softnessValue">0%</span>
+                                </label>
+                                <input type="range" class="slider" id="softness" min="0" max="100" value="0" step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="contrast">对比度</span>
+                                    <span class="control-value" id="contrastValue">115%</span>
+                                </label>
+                                <input type="range" class="slider" id="contrast" min="50" max="250" value="115"
+                                    step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="scale">缩放</span>
+                                    <span class="control-value" id="scaleValue">100%</span>
+                                </label>
+                                <input type="range" class="slider" id="scale" min="50" max="200" value="100" step="1">
+                            </div>
+                        </div>
+
+                        <!-- Colors -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="colors">颜色</div>
+                            <div class="color-grid">
+                                <div class="color-item">
+                                    <input type="color" id="colorC" value="#00B2FF">
+                                    <label>C</label>
+                                </div>
+                                <div class="color-item">
+                                    <input type="color" id="colorM" value="#FC4F4F">
+                                    <label>M</label>
+                                </div>
+                                <div class="color-item">
+                                    <input type="color" id="colorY" value="#FFD900">
+                                    <label>Y</label>
+                                </div>
+                                <div class="color-item">
+                                    <input type="color" id="colorK" value="#231F20">
+                                    <label>K</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gain -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="gain">增益</div>
+                            <div class="gain-flood-row">
+                                <div class="gain-flood-item">
+                                    <label>Cyan</label>
+                                    <input type="number" id="gainC" value="100" min="-100" max="100">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Magenta</label>
+                                    <input type="number" id="gainM" value="44" min="-100" max="100">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Yellow</label>
+                                    <input type="number" id="gainY" value="-100" min="-100" max="100">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Black</label>
+                                    <input type="number" id="gainK" value="0" min="-100" max="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Flood -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="flood">溢出</div>
+                            <div class="gain-flood-row">
+                                <div class="gain-flood-item">
+                                    <label>Cyan</label>
+                                    <input type="number" id="floodC" value="15" min="-50" max="50">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Magenta</label>
+                                    <input type="number" id="floodM" value="0" min="-50" max="50">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Yellow</label>
+                                    <input type="number" id="floodY" value="0" min="-50" max="50">
+                                </div>
+                                <div class="gain-flood-item">
+                                    <label>Black</label>
+                                    <input type="number" id="floodK" value="0" min="-50" max="50">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Grain -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="grain">颗粒</div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="mixing">混合</span>
+                                    <span class="control-value" id="grainMixingValue">5%</span>
+                                </label>
+                                <input type="range" class="slider" id="grainMixing" min="0" max="100" value="5"
+                                    step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="overlay">叠加</span>
+                                    <span class="control-value" id="grainOverlayValue">25%</span>
+                                </label>
+                                <input type="range" class="slider" id="grainOverlay" min="0" max="100" value="25"
+                                    step="1">
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label">
+                                    <span data-i18n="grainSize">大小</span>
+                                    <span class="control-value" id="grainSizeValue">1%</span>
+                                </label>
+                                <input type="range" class="slider" id="grainSize" min="0" max="100" value="1" step="1">
+                            </div>
+                        </div>
+
+                        <!-- Fill -->
+                        <div class="param-group">
+                            <div class="param-group-title" data-i18n="fill">背景</div>
+                            <div class="control-group">
+                                <div class="color-grid">
+                                    <div class="color-item">
+                                        <input type="color" id="colorBg" value="#EEEFD7">
+                                        <label>BG</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <script src="main.js" type="module"></script>
+</body>
+
+</html>
