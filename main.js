@@ -111,7 +111,8 @@ const fragmentShaderSource = `
                 neighborCenter += noiseOffset;
                 
                 // Sample color at neighbor center
-                vec2 samplePos = rotate(neighborCenter, -channelAngle) / u_resolution;
+                // Transform back to UV space (relative to resolution center)
+                vec2 samplePos = (rotate(neighborCenter, -channelAngle) + u_resolution * 0.5) / u_resolution;
                 samplePos = clamp(samplePos, 0.0, 1.0);
                 
                 vec3 sampleRgb = texture2D(u_image, samplePos).rgb;
@@ -159,7 +160,7 @@ const fragmentShaderSource = `
                 vec2 noiseOffset = hash2(neighborCell) * noise * gridSize.x * 0.5;
                 neighborCenter += noiseOffset;
                 
-                vec2 samplePos = rotate(neighborCenter, -channelAngle) / u_resolution;
+                vec2 samplePos = (rotate(neighborCenter, -channelAngle) + u_resolution * 0.5) / u_resolution;
                 samplePos = clamp(samplePos, 0.0, 1.0);
                 
                 vec3 sampleRgb = texture2D(u_image, samplePos).rgb;
@@ -196,6 +197,9 @@ const fragmentShaderSource = `
     
     void main() {
         vec2 pixelPos = v_texCoord * u_resolution;
+        vec2 center = u_resolution * 0.5;
+        vec2 centeredPos = pixelPos - center;
+        
         float scaledDotSize = u_dotSize * (u_scale / 100.0);
         vec2 gridSize = vec2(scaledDotSize);
         
@@ -212,17 +216,17 @@ const fragmentShaderSource = `
         
         if (u_type == 0) {
             // Dots mode: standard overlapping dots
-            dotC = getOverlappingDots(pixelPos, gridSize, angleC, 0, softness, noise, u_gainC, u_floodC);
-            dotM = getOverlappingDots(pixelPos, gridSize, angleM, 1, softness, noise, u_gainM, u_floodM);
-            dotY = getOverlappingDots(pixelPos, gridSize, angleY, 2, softness, noise, u_gainY, u_floodY);
-            dotK = getOverlappingDots(pixelPos, gridSize, angleK, 3, softness, noise, u_gainK, u_floodK);
+            dotC = getOverlappingDots(centeredPos, gridSize, angleC, 0, softness, noise, u_gainC, u_floodC);
+            dotM = getOverlappingDots(centeredPos, gridSize, angleM, 1, softness, noise, u_gainM, u_floodM);
+            dotY = getOverlappingDots(centeredPos, gridSize, angleY, 2, softness, noise, u_gainY, u_floodY);
+            dotK = getOverlappingDots(centeredPos, gridSize, angleK, 3, softness, noise, u_gainK, u_floodK);
             
         } else if (u_type == 1) {
             // Ink mode: gooey metaball effect
-            dotC = getInkDots(pixelPos, gridSize, angleC, 0, softness, noise, u_gainC, u_floodC);
-            dotM = getInkDots(pixelPos, gridSize, angleM, 1, softness, noise, u_gainM, u_floodM);
-            dotY = getInkDots(pixelPos, gridSize, angleY, 2, softness, noise, u_gainY, u_floodY);
-            dotK = getInkDots(pixelPos, gridSize, angleK, 3, softness, noise, u_gainK, u_floodK);
+            dotC = getInkDots(centeredPos, gridSize, angleC, 0, softness, noise, u_gainC, u_floodC);
+            dotM = getInkDots(centeredPos, gridSize, angleM, 1, softness, noise, u_gainM, u_floodM);
+            dotY = getInkDots(centeredPos, gridSize, angleY, 2, softness, noise, u_gainY, u_floodY);
+            dotK = getInkDots(centeredPos, gridSize, angleK, 3, softness, noise, u_gainK, u_floodK);
             
         } else {
             // Sharp mode: direct pixel sampling with hard edges
@@ -243,10 +247,10 @@ const fragmentShaderSource = `
             kVal = clamp(kVal, 0.0, 1.0);
             
             // Simple dot rendering with noise
-            vec2 cellC = mod(rotate(pixelPos, angleC) + hash2(floor(rotate(pixelPos, angleC) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
-            vec2 cellM = mod(rotate(pixelPos, angleM) + hash2(floor(rotate(pixelPos, angleM) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
-            vec2 cellY = mod(rotate(pixelPos, angleY) + hash2(floor(rotate(pixelPos, angleY) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
-            vec2 cellK = mod(rotate(pixelPos, angleK) + hash2(floor(rotate(pixelPos, angleK) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
+            vec2 cellC = mod(rotate(centeredPos, angleC) + hash2(floor(rotate(centeredPos, angleC) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
+            vec2 cellM = mod(rotate(centeredPos, angleM) + hash2(floor(rotate(centeredPos, angleM) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
+            vec2 cellY = mod(rotate(centeredPos, angleY) + hash2(floor(rotate(centeredPos, angleY) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
+            vec2 cellK = mod(rotate(centeredPos, angleK) + hash2(floor(rotate(centeredPos, angleK) / gridSize)) * noise * gridSize.x * 0.5, gridSize);
             
             vec2 center = gridSize * 0.5;
             float maxRadius = gridSize.x * 0.5;
