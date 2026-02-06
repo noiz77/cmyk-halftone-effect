@@ -18,11 +18,11 @@
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <div class="logo">
-                    <img src="favicon.svg" alt="CMYK Halftone Logo" class="logo-icon">
+                <img src="favicon.svg" alt="CMYK Halftone Logo" class="logo-icon">
+                <div class="header-text">
                     <h1>CMYK Halftone</h1>
+                    <p class="tagline" data-i18n="tagline">复古印刷半色调效果生成器</p>
                 </div>
-                <p class="tagline" data-i18n="tagline">复古印刷半色调效果生成器</p>
             </div>
             <button class="lang-toggle" id="langToggle" title="Switch Language">
                 <span class="lang-label" data-i18n="langSwitch">English</span>
@@ -72,7 +72,34 @@
 
                 <!-- Parameters Section -->
                 <section class="control-section">
-                    <h3 class="section-title" data-i18n="parameters">参数</h3>
+                    <div class="section-title param-header">
+                        <span data-i18n="parameters">参数</span>
+                        <div class="param-actions">
+                            <button class="icon-btn" id="importBtn" type="button" data-i18n-title="import"
+                                aria-label="导入参数" data-tooltip="导入参数">
+                                <span class="sr-only" data-i18n="import">导入参数</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 17V3" />
+                                    <path d="m6 11 6 6 6-6" />
+                                    <path d="M19 21H5" />
+                                </svg>
+                            </button>
+                            <button class="icon-btn" id="exportBtn" type="button" data-i18n-title="export"
+                                aria-label="导出参数" data-tooltip="导出参数">
+                                <span class="sr-only" data-i18n="export">导出参数</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M12 7v14" />
+                                    <path d="m18 13-6-6-6 6" />
+                                    <path d="M5 3h14" />
+                                </svg>
+                            </button>
+                            <input type="file" id="importInput" accept="application/json" hidden>
+                        </div>
+                    </div>
 
                     <div class="parameters-section">
                         <!-- Type -->
@@ -240,7 +267,7 @@
         </main>
     </div>
 
-    <script src="main.js" type="module"></script>
+    <script src="main.js"></script>
 </body>
 
 </html>

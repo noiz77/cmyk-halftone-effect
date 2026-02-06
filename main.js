@@ -302,6 +302,8 @@ const translations = {
         presetNewspaper: '报纸',
         presetVintage: '复古',
         presetCustom: '自定义',
+        import: '导入参数',
+        export: '导出参数',
         type: '类型',
         typeDots: '圆点',
         typeInk: '墨迹',
@@ -334,6 +336,8 @@ const translations = {
         presetNewspaper: 'Newspaper',
         presetVintage: 'Vintage',
         presetCustom: 'Custom',
+        import: 'Import Params',
+        export: 'Export Params',
         type: 'Type',
         typeDots: 'Dots',
         typeInk: 'Ink',
@@ -373,6 +377,7 @@ class CMYKHalftone {
         this.imageLoaded = false;
         this.originalImage = null;
         this.currentLang = 'zh'; // Default to Chinese
+        this.exportFileName = 'cmyk-halftone-params.json';
 
         // Default parameters (based on Drops preset)
         this.params = {
@@ -629,6 +634,163 @@ class CMYKHalftone {
         ] : [0, 0, 0];
     }
 
+    rgbToHex(rgb) {
+        const [r, g, b] = rgb.map(v => {
+            const clamped = Math.round(this.clamp(v, 0, 1) * 255);
+            return clamped.toString(16).padStart(2, '0');
+        });
+        return `#${r}${g}${b}`.toUpperCase();
+    }
+
+    clamp(value, min, max) {
+        if (Number.isNaN(value)) return min;
+        return Math.min(Math.max(value, min), max);
+    }
+
+    sanitizeParams(raw) {
+        // Start from current params to keep any future fields
+        const base = JSON.parse(JSON.stringify(this.params));
+        if (!raw || typeof raw !== 'object') return base;
+
+        const numeric = (key, min, max) => {
+            const v = parseFloat(raw[key]);
+            return Number.isFinite(v) ? this.clamp(v, min, max) : base[key];
+        };
+
+        const color = (key) => {
+            const val = raw[key];
+            if (Array.isArray(val) && val.length === 3 && val.every(n => Number.isFinite(n))) {
+                return val.map(v => this.clamp(v, 0, 1));
+            }
+            if (typeof val === 'string') {
+                const rgb = this.hexToRgb(val);
+                return rgb;
+            }
+            return base[key];
+        };
+
+        const sanitized = { ...base };
+        sanitized.dotSize = numeric('dotSize', 1, 200);
+        sanitized.gridNoise = numeric('gridNoise', 0, 2); // allow a bit over 100% for flexibility
+        sanitized.type = Math.round(this.clamp(raw.type ?? base.type, 0, 2));
+        sanitized.softness = numeric('softness', 0, 1);
+        sanitized.contrast = numeric('contrast', 0.5, 3);
+        sanitized.scale = numeric('scale', 0.5, 2);
+        sanitized.gainC = numeric('gainC', -2, 2);
+        sanitized.gainM = numeric('gainM', -2, 2);
+        sanitized.gainY = numeric('gainY', -2, 2);
+        sanitized.gainK = numeric('gainK', -2, 2);
+        sanitized.floodC = numeric('floodC', -1, 1);
+        sanitized.floodM = numeric('floodM', -1, 1);
+        sanitized.floodY = numeric('floodY', -1, 1);
+        sanitized.floodK = numeric('floodK', -1, 1);
+        sanitized.grainMixing = numeric('grainMixing', 0, 1);
+        sanitized.grainOverlay = numeric('grainOverlay', 0, 1);
+        sanitized.grainSize = numeric('grainSize', 0, 1);
+
+        sanitized.colorC = color('colorC');
+        sanitized.colorM = color('colorM');
+        sanitized.colorY = color('colorY');
+        sanitized.colorK = color('colorK');
+        sanitized.colorBg = color('colorBg');
+
+        return sanitized;
+    }
+
+    setCustomPresetActive() {
+        document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+        const customBtn = document.querySelector('.preset-btn[data-preset=\"custom\"]');
+        if (customBtn) customBtn.classList.add('active');
+    }
+
+    syncUIFromParams() {
+        // sliders
+        document.getElementById('size').value = this.params.dotSize;
+        document.getElementById('sizeValue').textContent = `${Math.round(this.params.dotSize)}%`;
+
+        document.getElementById('gridNoise').value = Math.round(this.params.gridNoise * 100);
+        document.getElementById('gridNoiseValue').textContent = `${Math.round(this.params.gridNoise * 100)}%`;
+
+        document.getElementById('softness').value = Math.round(this.params.softness * 100);
+        document.getElementById('softnessValue').textContent = `${Math.round(this.params.softness * 100)}%`;
+
+        document.getElementById('contrast').value = Math.round(this.params.contrast * 100);
+        document.getElementById('contrastValue').textContent = `${Math.round(this.params.contrast * 100)}%`;
+
+        document.getElementById('scale').value = Math.round(this.params.scale * 100);
+        document.getElementById('scaleValue').textContent = `${Math.round(this.params.scale * 100)}%`;
+
+        document.getElementById('grainMixing').value = Math.round(this.params.grainMixing * 100);
+        document.getElementById('grainMixingValue').textContent = `${Math.round(this.params.grainMixing * 100)}%`;
+
+        document.getElementById('grainOverlay').value = Math.round(this.params.grainOverlay * 100);
+        document.getElementById('grainOverlayValue').textContent = `${Math.round(this.params.grainOverlay * 100)}%`;
+
+        document.getElementById('grainSize').value = Math.round(this.params.grainSize * 100);
+        document.getElementById('grainSizeValue').textContent = `${Math.round(this.params.grainSize * 100)}%`;
+
+        // gains & floods
+        document.getElementById('gainC').value = Math.round(this.params.gainC * 100);
+        document.getElementById('gainM').value = Math.round(this.params.gainM * 100);
+        document.getElementById('gainY').value = Math.round(this.params.gainY * 100);
+        document.getElementById('gainK').value = Math.round(this.params.gainK * 100);
+
+        document.getElementById('floodC').value = Math.round(this.params.floodC * 100);
+        document.getElementById('floodM').value = Math.round(this.params.floodM * 100);
+        document.getElementById('floodY').value = Math.round(this.params.floodY * 100);
+        document.getElementById('floodK').value = Math.round(this.params.floodK * 100);
+
+        // colors
+        document.getElementById('colorC').value = this.rgbToHex(this.params.colorC);
+        document.getElementById('colorM').value = this.rgbToHex(this.params.colorM);
+        document.getElementById('colorY').value = this.rgbToHex(this.params.colorY);
+        document.getElementById('colorK').value = this.rgbToHex(this.params.colorK);
+        document.getElementById('colorBg').value = this.rgbToHex(this.params.colorBg);
+
+        // type buttons
+        document.querySelectorAll('.type-btn').forEach(btn => {
+            btn.classList.toggle('active', parseInt(btn.dataset.type, 10) === this.params.type);
+        });
+    }
+
+    exportParams() {
+        const data = {
+            version: 1,
+            params: this.params
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.download = this.exportFileName;
+        link.href = URL.createObjectURL(blob);
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+
+    importParams(file) {
+        if (!file) return;
+        // cap size ~100KB to avoid silly uploads
+        if (file.size > 100 * 1024) {
+            alert('Import failed: file too large.');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const parsed = JSON.parse(e.target.result);
+                const rawParams = parsed.params || parsed; // allow bare object
+                const sanitized = this.sanitizeParams(rawParams);
+                this.params = sanitized;
+                this.setCustomPresetActive();
+                this.syncUIFromParams();
+                this.render();
+            } catch (err) {
+                console.error('Import error', err);
+                alert('导入失败：文件格式错误 / Import failed: invalid JSON.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
     render() {
         if (!this.imageLoaded) return;
 
@@ -801,6 +963,15 @@ class CMYKHalftone {
             }
         });
 
+        // Update tooltips / aria-label for elements with data-i18n-title
+        document.querySelectorAll('[data-i18n-title]').forEach(el => {
+            const key = el.getAttribute('data-i18n-title');
+            if (t[key]) {
+                el.setAttribute('aria-label', t[key]);
+                el.setAttribute('data-tooltip', t[key]);
+            }
+        });
+
     }
 
     setupEventListeners() {
@@ -840,9 +1011,7 @@ class CMYKHalftone {
 
         // Helper to switch to custom preset UI state
         const switchToCustomPreset = () => {
-            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-            const customBtn = document.querySelector('.preset-btn[data-preset="custom"]');
-            if (customBtn) customBtn.classList.add('active');
+            this.setCustomPresetActive();
         };
 
         // Presets
@@ -935,6 +1104,14 @@ class CMYKHalftone {
         // Buttons
         document.getElementById('downloadBtn').addEventListener('click', () => this.download());
         document.getElementById('resetBtn').addEventListener('click', () => this.reset());
+        document.getElementById('exportBtn').addEventListener('click', () => this.exportParams());
+        document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importInput').click());
+        document.getElementById('importInput').addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                this.importParams(e.target.files[0]);
+                e.target.value = ''; // allow re-import same file
+            }
+        });
     }
 }
 
