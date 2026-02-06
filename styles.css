@@ -609,17 +609,25 @@ body {
 
 /* ===== Responsive ===== */
 @media (max-width: 1024px) {
+    .app-container {
+        height: auto;
+        overflow: visible;
+    }
+
     .main-content {
         grid-template-columns: 1fr;
+        overflow: visible;
     }
 
     .controls-panel {
         max-height: none;
         order: 2;
+        overflow: visible;
     }
 
     .canvas-section {
         order: 1;
+        overflow: visible;
     }
 
     .presets-grid {
