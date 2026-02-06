@@ -768,6 +768,7 @@ class CMYKHalftone {
     reset() {
         this.imageLoaded = false;
         this.originalImage = null;
+        document.getElementById('imageInput').value = ''; // Clear file input to allow re-uploading same file
         document.getElementById('uploadOverlay').classList.remove('hidden');
         document.getElementById('downloadBtn').disabled = true;
         this.applyPreset('default');
