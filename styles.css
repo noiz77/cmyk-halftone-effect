@@ -88,22 +88,11 @@ body {
 }
 
 .logo-icon {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--accent-blue);
-    position: relative;
-}
-
-.logo-icon::after {
-    content: '';
-    position: absolute;
-    top: 3px;
-    right: 3px;
-    width: 8px;
-    height: 8px;
-    background: var(--bg-primary);
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    background: none;
+    border-radius: 0;
 }
 
 .logo h1 {
