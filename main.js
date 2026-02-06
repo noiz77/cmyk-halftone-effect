@@ -301,6 +301,7 @@ const translations = {
         presetDrops: '油墨',
         presetNewspaper: '报纸',
         presetVintage: '复古',
+        presetCustom: '自定义',
         type: '类型',
         typeDots: '圆点',
         typeInk: '墨迹',
@@ -332,6 +333,7 @@ const translations = {
         presetDrops: 'Drops',
         presetNewspaper: 'Newspaper',
         presetVintage: 'Vintage',
+        presetCustom: 'Custom',
         type: 'Type',
         typeDots: 'Dots',
         typeInk: 'Ink',
@@ -836,9 +838,23 @@ class CMYKHalftone {
             }
         });
 
+        // Helper to switch to custom preset UI state
+        const switchToCustomPreset = () => {
+            document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
+            const customBtn = document.querySelector('.preset-btn[data-preset="custom"]');
+            if (customBtn) customBtn.classList.add('active');
+        };
+
         // Presets
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
+                // If custom button is clicked, manually switch to custom state
+                // This keeps current parameters but highlights the custom button
+                if (btn.dataset.preset === 'custom') {
+                    switchToCustomPreset();
+                    return;
+                }
+
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.applyPreset(btn.dataset.preset);
@@ -851,6 +867,7 @@ class CMYKHalftone {
                 document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.params.type = parseInt(btn.dataset.type);
+                switchToCustomPreset();
                 this.render();
             });
         });
@@ -873,6 +890,7 @@ class CMYKHalftone {
                 const value = parseFloat(slider.value);
                 this.params[param] = value / divisor;
                 document.getElementById(display).textContent = format(value);
+                switchToCustomPreset();
                 this.render();
             });
         });
@@ -882,6 +900,7 @@ class CMYKHalftone {
         gains.forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
                 this.params[id] = parseFloat(e.target.value) / 100;
+                switchToCustomPreset();
                 this.render();
             });
         });
@@ -891,6 +910,7 @@ class CMYKHalftone {
         floods.forEach(id => {
             document.getElementById(id).addEventListener('input', (e) => {
                 this.params[id] = parseFloat(e.target.value) / 100;
+                switchToCustomPreset();
                 this.render();
             });
         });
@@ -907,6 +927,7 @@ class CMYKHalftone {
         colors.forEach(({ id, param }) => {
             document.getElementById(id).addEventListener('input', (e) => {
                 this.params[param] = this.hexToRgb(e.target.value);
+                switchToCustomPreset();
                 this.render();
             });
         });

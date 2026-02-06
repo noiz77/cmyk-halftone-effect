@@ -368,7 +368,7 @@ body {
 /* Presets */
 .presets-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
 }
 
@@ -377,8 +377,8 @@ body {
 }
 
 .preset-btn {
-    padding: 10px 6px;
-    font-size: 0.8rem;
+    padding: 8px 4px;
+    font-size: 0.75rem;
     font-weight: 500;
     background: var(--bg-card);
     color: var(--text-secondary);
@@ -631,7 +631,7 @@ body {
     }
 
     .presets-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 
     .lang-toggle {
@@ -651,7 +651,7 @@ body {
     }
 
     .presets-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 
     .color-grid {
