@@ -588,7 +588,8 @@ class CMYKHalftone {
         const gl = this.gl;
 
         // Resize canvas to match image aspect ratio
-        const maxSize = 1200;
+        // Increase limit to 4096 to support higher resolution exports while staying within safe WebGL limits
+        const maxSize = 4096;
         let width = img.width;
         let height = img.height;
 
