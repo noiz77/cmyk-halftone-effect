@@ -3,3 +3,16 @@ skills-lock.json
 
 # macOS
 .DS_Store
+
+# Dependencies
+node_modules/
+
+# Editors
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Local scripts
+start_server.sh
