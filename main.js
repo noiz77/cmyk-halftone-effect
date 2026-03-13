@@ -372,7 +372,7 @@ class CMYKHalftone {
         this.gl = this.canvas.getContext('webgl', glOptions) || this.canvas.getContext('experimental-webgl', glOptions);
 
         if (!this.gl) {
-            alert('WebGL is not available. Please use a modern browser.');
+            showToast('WebGL is not supported. Please use a modern browser. / 浏览器不支持 WebGL，请使用现代浏览器。');
             return;
         }
 
@@ -583,6 +583,8 @@ class CMYKHalftone {
     }
 
     loadImage(file) {
+        const statusEl = document.getElementById('loadingStatus');
+        if (statusEl) statusEl.textContent = 'Loading image...';
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
@@ -624,7 +626,24 @@ class CMYKHalftone {
 
         this.imageLoaded = true;
         document.getElementById('uploadOverlay').classList.add('hidden');
-        document.getElementById('downloadBtn').disabled = false;
+        // Download wake-up pulse
+        const dlBtn = document.getElementById('downloadBtn');
+        dlBtn.disabled = false;
+        dlBtn.classList.remove('just-enabled');
+        void dlBtn.offsetWidth;
+        dlBtn.classList.add('just-enabled');
+        dlBtn.addEventListener('animationend', () => dlBtn.classList.remove('just-enabled'), { once: true });
+        // Photographic flash — like a darkroom exposure
+        const flash = document.getElementById('canvasFlash');
+        if (flash) {
+            flash.classList.remove('active');
+            void flash.offsetWidth;
+            flash.classList.add('active');
+        }
+
+        const statusEl = document.getElementById('loadingStatus');
+        if (statusEl) statusEl.textContent = '';
+        this.canvas.setAttribute('aria-label', `CMYK halftone effect preview — ${width}×${height}px`);
 
         this.render();
     }
@@ -703,8 +722,9 @@ class CMYKHalftone {
 
     setCustomPresetActive() {
         document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-        const customBtn = document.querySelector('.preset-btn[data-preset=\"custom\"]');
+        const customBtn = document.querySelector('.preset-btn[data-preset="custom"]');
         if (customBtn) customBtn.classList.add('active');
+        this.syncAriaPressed('.preset-btn');
     }
 
     syncUIFromParams() {
@@ -755,6 +775,7 @@ class CMYKHalftone {
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.type, 10) === this.params.type);
         });
+        this.syncAriaPressed('.type-btn');
     }
 
     exportParams() {
@@ -774,7 +795,7 @@ class CMYKHalftone {
         if (!file) return;
         // cap size ~100KB to avoid silly uploads
         if (file.size > 100 * 1024) {
-            alert('Import failed: file too large.');
+            showToast('Import failed: file too large. / 导入失败：文件过大');
             return;
         }
         const reader = new FileReader();
@@ -789,7 +810,7 @@ class CMYKHalftone {
                 this.render();
             } catch (err) {
                 console.error('Import error', err);
-                alert('导入失败：文件格式错误 / Import failed: invalid JSON.');
+                showToast('导入失败：文件格式错误 / Import failed: invalid JSON.');
             }
         };
         reader.readAsText(file);
@@ -921,6 +942,12 @@ class CMYKHalftone {
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.classList.toggle('active', parseInt(btn.dataset.type) === preset.type);
         });
+        this.syncAriaPressed('.type-btn');
+        // Init all slider fill tracks after preset applies
+        document.querySelectorAll('.slider').forEach(s => {
+            const pct = (parseFloat(s.value) - parseFloat(s.min)) / (parseFloat(s.max) - parseFloat(s.min)) * 100;
+            s.style.setProperty('--slider-fill', `${pct}%`);
+        });
     }
 
     download() {
@@ -939,20 +966,29 @@ class CMYKHalftone {
         document.getElementById('imageInput').value = ''; // Clear file input to allow re-uploading same file
         document.getElementById('uploadOverlay').classList.remove('hidden');
         document.getElementById('downloadBtn').disabled = true;
+        this.canvas.setAttribute('aria-label', 'CMYK halftone effect preview — upload an image to begin');
         this.applyPreset('default');
 
         // Reset preset buttons
         document.querySelectorAll('.preset-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.preset === 'default');
         });
+        this.syncAriaPressed('.preset-btn');
 
         const gl = this.gl;
         gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
+    syncAriaPressed(selector) {
+        document.querySelectorAll(selector).forEach(btn => {
+            btn.setAttribute('aria-pressed', btn.classList.contains('active') ? 'true' : 'false');
+        });
+    }
+
     setLanguage(lang) {
         this.currentLang = lang;
+        document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
         const t = translations[lang];
 
         // Update all elements with data-i18n attribute
@@ -1029,7 +1065,9 @@ class CMYKHalftone {
                 }
 
                 document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                btn.classList.add('active', 'stamping');
+                btn.addEventListener('animationend', () => btn.classList.remove('stamping'), { once: true });
+                this.syncAriaPressed('.preset-btn');
                 this.applyPreset(btn.dataset.preset);
             });
         });
@@ -1038,7 +1076,9 @@ class CMYKHalftone {
         document.querySelectorAll('.type-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                btn.classList.add('active', 'stamping');
+                btn.addEventListener('animationend', () => btn.classList.remove('stamping'), { once: true });
+                this.syncAriaPressed('.type-btn');
                 this.params.type = parseInt(btn.dataset.type);
                 switchToCustomPreset();
                 this.render();
@@ -1062,7 +1102,16 @@ class CMYKHalftone {
             slider.addEventListener('input', () => {
                 const value = parseFloat(slider.value);
                 this.params[param] = value / divisor;
-                document.getElementById(display).textContent = format(value);
+                // Update display + flash badge
+                const displayEl = document.getElementById(display);
+                displayEl.textContent = format(value);
+                displayEl.classList.remove('flashing');
+                void displayEl.offsetWidth;
+                displayEl.classList.add('flashing');
+                displayEl.addEventListener('animationend', () => displayEl.classList.remove('flashing'), { once: true });
+                // Fill track left of thumb
+                const pct = (value - parseFloat(slider.min)) / (parseFloat(slider.max) - parseFloat(slider.min)) * 100;
+                slider.style.setProperty('--slider-fill', `${pct}%`);
                 switchToCustomPreset();
                 this.render();
             });
@@ -1117,6 +1166,20 @@ class CMYKHalftone {
             }
         });
     }
+}
+
+// ===== Toast Notifications =====
+function showToast(message, duration = 5000) {
+    const toast = document.getElementById('toast');
+    if (!toast) { console.warn('[Toast]', message); return; }
+    toast.textContent = message;
+    toast.removeAttribute('aria-hidden');
+    toast.classList.add('visible');
+    clearTimeout(toast._dismissTimer);
+    toast._dismissTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+        toast.setAttribute('aria-hidden', 'true');
+    }, duration);
 }
 
 // Initialize

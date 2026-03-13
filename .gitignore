@@ -1,7 +1,5 @@
-.DS_Store
-node_modules/
-.vscode/
-.idea/
-*.log
+# Claude Code
+skills-lock.json
 
-start_server.sh
+# macOS
+.DS_Store

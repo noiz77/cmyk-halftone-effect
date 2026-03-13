@@ -8,17 +8,20 @@
     <meta name="description" content="将图片转换为复古 CMYK 半色调印刷效果，支持实时预览和参数调节">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Space+Grotesk:wght@300..700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
+    <a href="#glCanvas" class="skip-link">Skip to canvas</a>
     <div class="app-container">
         <!-- Header -->
         <header class="header">
             <div class="header-left">
-                <img src="favicon.svg" alt="CMYK Halftone Logo" class="logo-icon">
+                <div class="cmyk-mark" aria-hidden="true">
+                    <span></span><span></span><span></span><span></span>
+                </div>
                 <div class="header-text">
                     <h1>CMYK Halftone</h1>
                     <p class="tagline" data-i18n="tagline">复古印刷半色调效果生成器</p>
@@ -34,7 +37,9 @@
             <!-- Canvas Area -->
             <div class="canvas-section">
                 <div class="canvas-wrapper" id="canvasWrapper">
-                    <canvas id="glCanvas"></canvas>
+                    <div class="reg-marks" aria-hidden="true"></div>
+                    <div id="canvasFlash" class="canvas-flash" aria-hidden="true"></div>
+                    <canvas id="glCanvas" role="img" aria-label="CMYK halftone effect preview — upload an image to begin">CMYK halftone effect preview</canvas>
                     <div class="upload-overlay" id="uploadOverlay">
                         <label class="upload-content" for="imageInput">
                             <div class="upload-icon">
@@ -60,13 +65,13 @@
             <aside class="controls-panel">
                 <!-- Presets Section -->
                 <section class="control-section">
-                    <h3 class="section-title" data-i18n="presets">预设</h3>
-                    <div class="presets-grid">
-                        <button class="preset-btn active" data-preset="default" data-i18n="presetDefault">默认</button>
-                        <button class="preset-btn" data-preset="drops" data-i18n="presetDrops">油墨</button>
-                        <button class="preset-btn" data-preset="newspaper" data-i18n="presetNewspaper">报纸</button>
-                        <button class="preset-btn" data-preset="vintage" data-i18n="presetVintage">复古</button>
-                        <button class="preset-btn" data-preset="custom" data-i18n="presetCustom">自定义</button>
+                    <h3 class="section-title" id="presetsTitle" data-i18n="presets">预设</h3>
+                    <div class="presets-grid" role="group" aria-labelledby="presetsTitle">
+                        <button class="preset-btn active" data-preset="default" data-i18n="presetDefault" aria-pressed="true">默认</button>
+                        <button class="preset-btn" data-preset="drops" data-i18n="presetDrops" aria-pressed="false">油墨</button>
+                        <button class="preset-btn" data-preset="newspaper" data-i18n="presetNewspaper" aria-pressed="false">报纸</button>
+                        <button class="preset-btn" data-preset="vintage" data-i18n="presetVintage" aria-pressed="false">复古</button>
+                        <button class="preset-btn" data-preset="custom" data-i18n="presetCustom" aria-pressed="false">自定义</button>
                     </div>
                 </section>
 
@@ -104,11 +109,11 @@
                     <div class="parameters-section">
                         <!-- Type -->
                         <div class="param-group">
-                            <div class="param-group-title" data-i18n="type">类型</div>
-                            <div class="type-buttons">
-                                <button class="type-btn" data-type="0" data-i18n="typeDots">圆点</button>
-                                <button class="type-btn active" data-type="1" data-i18n="typeInk">墨迹</button>
-                                <button class="type-btn" data-type="2" data-i18n="typeSharp">锐利</button>
+                            <div class="param-group-title" id="typeGroupTitle" data-i18n="type">类型</div>
+                            <div class="type-buttons" role="group" aria-labelledby="typeGroupTitle">
+                                <button class="type-btn" data-type="0" data-i18n="typeDots" aria-pressed="false">圆点</button>
+                                <button class="type-btn active" data-type="1" data-i18n="typeInk" aria-pressed="true">墨迹</button>
+                                <button class="type-btn" data-type="2" data-i18n="typeSharp" aria-pressed="false">锐利</button>
                             </div>
                         </div>
 
@@ -158,19 +163,19 @@
                             <div class="color-grid">
                                 <div class="color-item">
                                     <input type="color" id="colorC" value="#00B2FF">
-                                    <label>C</label>
+                                    <label for="colorC">C</label>
                                 </div>
                                 <div class="color-item">
                                     <input type="color" id="colorM" value="#FC4F4F">
-                                    <label>M</label>
+                                    <label for="colorM">M</label>
                                 </div>
                                 <div class="color-item">
                                     <input type="color" id="colorY" value="#FFD900">
-                                    <label>Y</label>
+                                    <label for="colorY">Y</label>
                                 </div>
                                 <div class="color-item">
                                     <input type="color" id="colorK" value="#231F20">
-                                    <label>K</label>
+                                    <label for="colorK">K</label>
                                 </div>
                             </div>
                         </div>
@@ -180,19 +185,19 @@
                             <div class="param-group-title" data-i18n="gain">增益</div>
                             <div class="gain-flood-row">
                                 <div class="gain-flood-item">
-                                    <label>Cyan</label>
+                                    <label for="gainC">Cyan</label>
                                     <input type="number" id="gainC" value="100" min="-100" max="100">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Magenta</label>
+                                    <label for="gainM">Magenta</label>
                                     <input type="number" id="gainM" value="44" min="-100" max="100">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Yellow</label>
+                                    <label for="gainY">Yellow</label>
                                     <input type="number" id="gainY" value="-100" min="-100" max="100">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Black</label>
+                                    <label for="gainK">Black</label>
                                     <input type="number" id="gainK" value="0" min="-100" max="100">
                                 </div>
                             </div>
@@ -203,19 +208,19 @@
                             <div class="param-group-title" data-i18n="flood">溢出</div>
                             <div class="gain-flood-row">
                                 <div class="gain-flood-item">
-                                    <label>Cyan</label>
+                                    <label for="floodC">Cyan</label>
                                     <input type="number" id="floodC" value="15" min="-50" max="50">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Magenta</label>
+                                    <label for="floodM">Magenta</label>
                                     <input type="number" id="floodM" value="0" min="-50" max="50">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Yellow</label>
+                                    <label for="floodY">Yellow</label>
                                     <input type="number" id="floodY" value="0" min="-50" max="50">
                                 </div>
                                 <div class="gain-flood-item">
-                                    <label>Black</label>
+                                    <label for="floodK">Black</label>
                                     <input type="number" id="floodK" value="0" min="-50" max="50">
                                 </div>
                             </div>
@@ -256,7 +261,7 @@
                                 <div class="color-grid">
                                     <div class="color-item">
                                         <input type="color" id="colorBg" value="#EEEFD7">
-                                        <label>BG</label>
+                                        <label for="colorBg">BG</label>
                                     </div>
                                 </div>
                             </div>
@@ -267,6 +272,8 @@
         </main>
     </div>
 
+    <div id="loadingStatus" role="status" aria-live="polite" class="sr-only"></div>
+    <div id="toast" role="alert" aria-live="assertive" class="toast" aria-hidden="true"></div>
     <script src="main.js"></script>
 </body>
 
